@@ -41,5 +41,4 @@ int main()
     t2.join();
     
     delete ptr;
-        
 }
