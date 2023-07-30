@@ -263,3 +263,25 @@ This code will invoke `my_x.do_lengthy_work()` on the new thread because the add
 
 ### Arguments cannot be COPIED, but MOVED
 
+In this case, the data held within one object is transferred over to another, leaving the original object empty.
+
+An example case study for this is : `std::unique_ptr`.
+
+An `std::unique_ptr` provides automatic memory management for dynamically allocated objects. Only one `std::unique_ptr` instance can points to a given object at a time, and when that instance is destroyed, the pointed-to object is deleted.
+
+The `move constructor` and the `move assignment operator` allows the ownership of an object to be transffered around between `std::unique_ptr` instances. Such transfer leaves the source object with a NULL pointer.
+
+> Where the source object is temporary, the move is automatic; but where the source is a named value, the transfer must be requested directly by invoking `std::move()`.
+
+```C++
+void process_big_object(std::unique_ptr<big_object>);
+
+std::unique_ptr<big_object> p(new big_object);
+
+p->prepare_data(42);
+
+std::thread t(process_big_object,std::move(p));
+```
+
+By specifying `std::move(p)` in the `std::thread` constructor, the ownership of `big_object` is transferred first into internal storage for the newly created thread, and then into `process_big_object`.
+
