@@ -160,3 +160,54 @@ assert(!t.joinable());
 
 ## Passing arguments to a thread function
 
+Passing arguments to a callable object or function is fundamentally as sumple as passing additional arguments to `std::thread` constructor.
+
+Important to note that  :
+
+> By default, the arguments are `copied` into **internal storage**, where they can be  accessed by the  newly created thread of execution, and then passed to the callable object or function as `rvalues` as if they were temporaries.
+
+### Function expects  a const reference
+
+Consider
+
+```C++
+void f(int i,std::string const& s);
+std::thread t(f,3,"hello");
+```
+
+Here, even though `f` takes a `std::string` as  the second parameter, thte string literal is passed as a `char const*` and converted to a `std::string` only in the context of the new thread.
+
+```C++
+void f(int i,std::string const& s);
+void oops(int some_param)
+{
+    char buffer[1024];
+    sprintf(buffer, "%i",some_param);
+
+    std::thread t(f, 3, buffer);
+    
+    t.detach();
+}
+```
+
+Here, it is a **pointer to a local variable `buffer`** that is passed through to the new thread, and the function `oops()` can possibly exit before the `buffer` has been converted to a `std::string` on the new thread.
+
+Hence, leads to **UNDEFINED BEHAVIOR**.
+In this case, the problem is that you were relying on the implicit conversion of the pointer to the buffer into the std::string object expected as a function parameter, but this conversion happens too late because the std::thread constructor copies the supplied values as is, without converting to the expected argument type.
+
+
+Here, the solution is to explicitly cast it to `std::string`
+
+```C++
+void f(int i,std::string const& s);
+void oops(int some_param)
+{
+    char buffer[1024];
+    sprintf(buffer, "%i",some_param);
+
+    std::thread t(f, 3, std::string(buffer));
+    
+    t.detach();
+}
+```
+
