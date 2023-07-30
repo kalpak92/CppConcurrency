@@ -193,8 +193,8 @@ void oops(int some_param)
 Here, it is a **pointer to a local variable `buffer`** that is passed through to the new thread, and the function `oops()` can possibly exit before the `buffer` has been converted to a `std::string` on the new thread.
 
 Hence, leads to **UNDEFINED BEHAVIOR**.
-In this case, the problem is that you were relying on the implicit conversion of the pointer to the buffer into the std::string object expected as a function parameter, but this conversion happens too late because the std::thread constructor copies the supplied values as is, without converting to the expected argument type.
 
+In this case, the problem is that you were relying on the implicit conversion of the pointer to the buffer into the std::string object expected as a function parameter, but this conversion happens too late because the `std::thread` constructor ***copies the supplied values as is, without converting to the expected argument type***.
 
 Here, the solution is to explicitly cast it to `std::string`
 
@@ -210,4 +210,56 @@ void oops(int some_param)
     t.detach();
 }
 ```
+
+### Function expects a non-const reference
+
+Consider
+
+```C++
+void update_data_for_widget(widget_id w, widget_data& data);
+void oops_again(widget_id w)
+{
+    widget_data data;
+
+    std::thread t(update_data_for_widget, w, data);
+    
+    display_status();
+    
+    t.join();
+    
+    process_widget_data(data);
+}
+```
+
+- Although the `update_data_for_widget` expects the second parameter to be passed by reference, the `std::thread` constructor does not know that.
+- It is oblivious of the types of arguments expected by the function and blindly copies the supplied values.
+- But the internal code passes copied arguments as `rvalues` in order to work with the move-only types.
+
+> This will fail to compile because you cannot pass an `rvalue` to a function that expects a `non-const` reference.
+
+To solve this, wrap the arguments in `std::ref`. This passes a reference instead of a `rvalue`.
+
+```C++
+std::thread t(update_data_for_widget, w, std::ref(data));
+```
+
+### Member function pointer as the function
+
+You can pass a member function pointer as the function, provided you supply a suitable object pointer as the first argument.
+
+```C++
+class X
+{
+public:
+    void do_lengthy_work();
+};
+
+X my_x;
+
+std::thread t(&X::do_lengthy_work, &my_x);
+```
+
+This code will invoke `my_x.do_lengthy_work()` on the new thread because the address of `my_x` is supplied as the object pointer.
+
+### Arguments cannot be COPIED, but MOVED
 
