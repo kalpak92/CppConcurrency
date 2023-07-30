@@ -73,7 +73,7 @@ Decision has to be made whether to wait for the thread to finish, or leave the t
 
 - The thread gets terminated by invoking `std::terminate()` in the destructor of `std::thread`.
 
->> If you don't wait for the thread to finish, ensure that the data accessed by the thread is valid until the thread has finished using it.
+> If you don't wait for the thread to finish, ensure that the data accessed by the thread is valid until the thread has finished using it.
 
 ```c++
 struct func
@@ -104,7 +104,7 @@ Here:
 2. Does not wait for the thread to finish
 3. New thread might still be running.
 
->> Waiting in exceptional circumstances
+> Waiting in exceptional circumstances
 
 It is important that either `join()` or `detach()` is called before a `std::thread` object is destroyed.
 
@@ -149,3 +149,5 @@ void f()
 ### Backgroud threads
 
 Detached threads truly run in the background; ownership and control are passed over to the **C++ Runtime Library**, which ensures that the resources associated with the thread are correctly reclaimed when the thread exits
+
+Calling detach() on a std::thread object leaves the thread to run in the background, with no direct means of communicating with it.
