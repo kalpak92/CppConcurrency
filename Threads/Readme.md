@@ -104,7 +104,7 @@ Here:
 2. Does not wait for the thread to finish
 3. New thread might still be running.
 
-> Waiting in exceptional circumstances
+### Waiting in exceptional circumstances
 
 It is important that either `join()` or `detach()` is called before a `std::thread` object is destroyed.
 
@@ -151,3 +151,12 @@ void f()
 Detached threads truly run in the background; ownership and control are passed over to the **C++ Runtime Library**, which ensures that the resources associated with the thread are correctly reclaimed when the thread exits
 
 Calling detach() on a std::thread object leaves the thread to run in the background, with no direct means of communicating with it.
+
+```C++
+std::thread t(do_background_work);
+t.detach();
+assert(!t.joinable());
+```
+
+## Passing arguments to a thread function
+
