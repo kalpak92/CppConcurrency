@@ -332,3 +332,37 @@ Until now :
 > But in this case t1 already had an associated thread (which was running `some_other_function`), so `std::terminate()` is called to terminate the program. This is done for consistency with the `std::thread` destructor.
 > You must explicitly wait for a thread to complete or detach it before destruction, and the same applies to assignment: 
 >> You can’t just drop a thread by assigning a new value to the `std::thread`` object that manages it.
+
+### Returning a `std::thread` from a function
+
+```C++
+std::thread f()
+{
+    void some_function();
+    return std::thread(some_function);
+}
+
+std::thread g()
+{
+    void some_other_function(int);
+    std::thread t(some_other_function,42);
+    return t;
+}
+```
+
+A  function can accept an instance of `std::thread` by value as one of its paramenters.
+
+```C++
+void f(std::thread t);
+
+void g()
+{
+    void some_function();
+    
+    f(std::thread(some_function));
+    
+    std::thread t(some_function);
+
+    f(std::move(t));    // ownership is transferred to the function
+}
+```
