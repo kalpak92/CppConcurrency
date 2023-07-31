@@ -366,3 +366,24 @@ void g()
     f(std::move(t));    // ownership is transferred to the function
 }
 ```
+
+The move support in `std::thread` also allows for containers of `std::thread` objects, if those containers are move-aware (like the updated `std::vector<>`). 
+
+This means that you can write code like that in the following listing, which spawns a number of threads and then waits for them to finish.
+
+```C++
+void do_work(unsigned id);
+
+void f()
+{
+    std::vector<std::thread> threads;
+    for(unsigned i = 0; i < 20; ++i)
+    {
+        threads.emplace_back(do_work, i);     // Spawns threads
+    }
+
+    for(auto& entry: threads)                // Calls join() on each thread in turn
+        entry.join();
+}
+```
+
