@@ -313,3 +313,22 @@ t3 = std::move(t2);
 t1 = std::move(t3);          1
 ```
 
+First, a new thread is started and associated with t1. 
+Ownership is then transferred over to t2 when t2 is constructed, by invoking std::move() to explicitly move ownership.
+At this point, t1 no longer has an associated thread of execution; the thread running some_function is now associated with t2.
+
+Then, a new thread is started and associated with a temporary std::thread object. 
+The subsequent transfer of ownership into t1 doesn’t require a call to `std::move()` to explicitly move ownership, **because the owner is a temporary object—moving from temporaries is automatic and implicit.**
+
+Until now :
+
+- t3 is default-constructed, which means that it’s created without any associated thread of execution.
+- Ownership of the thread currently associated with t2 is transferred into t3, again with an explicit call to `std::move()`, because t2 is a named object.
+- t1 is associated with the thread running `some_other_function`, 
+- t2 has no associated thread, and 
+- t3 is associated with the thread running `some_function`.
+
+> The final move transfers ownership of the thread running `some_function` back to t1 where it started. 
+> But in this case t1 already had an associated thread (which was running `some_other_function`), so `std::terminate()` is called to terminate the program. This is done for consistency with the `std::thread` destructor.
+> You must explicitly wait for a thread to complete or detach it before destruction, and the same applies to assignment: 
+>> You can’t just drop a thread by assigning a new value to the `std::thread`` object that manages it.
