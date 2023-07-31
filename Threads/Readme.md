@@ -285,3 +285,31 @@ std::thread t(process_big_object,std::move(p));
 
 By specifying `std::move(p)` in the `std::thread` constructor, the ownership of `big_object` is transferred first into internal storage for the newly created thread, and then into `process_big_object`.
 
+## Transferring ownership of  a thread
+
+Suppose you want to write a function that creates a thread to run in the background, but passes ownership of the new thread back to the calling function rather than waiting for it to complete;
+
+or
+
+Create a thread and pass ownership in to some function that should wait for it to complete.
+
+In either cases, we  need to transfer ownership from one place to another.
+
+> This is where  the move support of `std::thread` comes in. `std::thread` is movable, not copyable.
+> This means that t he  ownership of a particular thread of execution can be moved between `std::thread` instances.
+
+```C++
+void some_function();
+void some_other_function();
+
+std::thread t1(some_function);
+std::thread t2 = std::move(t1);
+
+t1 = std::thread(some_other_function);
+
+std::thread t3;
+
+t3 = std::move(t2);
+t1 = std::move(t3);          1
+```
+
